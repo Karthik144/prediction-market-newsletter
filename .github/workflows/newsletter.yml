@@ -1,0 +1,30 @@
+name: Daily Newsletter
+
+on:
+  schedule:
+    # 7:00 AM ET = 12:00 PM UTC (EST) or 11:00 AM UTC (EDT)
+    - cron: '0 12 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+      - name: Send newsletter
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+        run: python -m src.main
