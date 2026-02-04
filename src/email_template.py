@@ -1,5 +1,11 @@
-def _format_probability(outcome_prices: list[str]) -> str:
+import json
+
+
+def _format_probability(outcome_prices) -> str:
     """Format the Yes outcome price as a percentage."""
+    # API returns either a list or a JSON string like '["0.65", "0.35"]'
+    if isinstance(outcome_prices, str):
+        outcome_prices = json.loads(outcome_prices)
     price = float(outcome_prices[0])
     return f"{price * 100:.0f}%"
 

@@ -1,6 +1,10 @@
 import os
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from src.polymarket import fetch_active_markets
 from src.ranker import rank_top_movers
 from src.email_template import render_newsletter
@@ -20,14 +24,14 @@ def run(resend_api_key: str, audience_id: str, from_email: str) -> None:
     subject = f"Top Movers \u2014 {date_str}"
     html = render_newsletter(top_movers, date_str=date_str)
 
-    broadcast_id = send_newsletter(
+    email_ids = send_newsletter(
         html=html,
         subject=subject,
         audience_id=audience_id,
         from_email=from_email,
         api_key=resend_api_key,
     )
-    print(f"Newsletter sent. Broadcast ID: {broadcast_id}")
+    print(f"Newsletter sent to {len(email_ids)} recipients.")
 
 
 if __name__ == "__main__":
