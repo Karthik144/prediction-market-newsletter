@@ -10,11 +10,11 @@ def test_run_orchestrates_pipeline(mock_fetch, mock_rank, mock_render, mock_send
     mock_fetch.return_value = [{"id": "1"}]
     mock_rank.return_value = [{"id": "1", "question": "Test?"}]
     mock_render.return_value = "<html>newsletter</html>"
-    mock_send.return_value = "broadcast-123"
+    mock_send.return_value = ["email-123"]
 
     run(
         resend_api_key="re_key",
-        segment_id="seg-1",
+        audience_id="aud-1",
         from_email="test@example.com",
     )
 
@@ -34,7 +34,7 @@ def test_run_skips_send_when_no_movers(mock_fetch, mock_rank, mock_render, mock_
 
     run(
         resend_api_key="re_key",
-        segment_id="seg-1",
+        audience_id="aud-1",
         from_email="test@example.com",
     )
 
