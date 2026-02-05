@@ -58,3 +58,19 @@ def test_render_newsletter_contains_date():
 def test_render_newsletter_contains_unsubscribe_placeholder():
     html = render_newsletter(SAMPLE_MOVERS, date_str="Feb 3, 2026")
     assert "{{{RESEND_UNSUBSCRIBE_URL}}}" in html
+
+
+def test_render_market_row_displays_summary():
+    market = {
+        "question": "Will the Fed cut rates?",
+        "slug": "fed-rate-cut",
+        "description": "Original description",
+        "summary": "Traders give 73% odds to a Fed rate cut. This follows weak jobs data.",
+        "outcomePrices": '["0.73", "0.27"]',
+        "oneDayPriceChange": 0.22,
+        "volume24hr": 500000.0,
+    }
+    html = render_newsletter([market], date_str="Feb 4, 2026")
+
+    assert "Traders give 73% odds to a Fed rate cut" in html
+    assert "This follows weak jobs data" in html

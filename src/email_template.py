@@ -38,7 +38,9 @@ def _render_market_row(market: dict) -> str:
     """Render a single market as an HTML table row."""
     question = market["question"]
     slug = market["slug"]
-    description = _truncate(market.get("description", ""))
+    # Use LLM summary if available, otherwise fall back to description
+    summary = market.get("summary")
+    description = summary if summary else _truncate(market.get("description", ""))
     probability = _format_probability(market["outcomePrices"])
     arrow, change_str, color = _format_change(market["oneDayPriceChange"])
     volume = _format_volume(market.get("volume24hr", 0))
