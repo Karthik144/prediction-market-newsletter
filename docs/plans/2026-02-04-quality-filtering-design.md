@@ -8,7 +8,8 @@ Replace the current "rank by 24h price change" approach with a multi-stage quali
 
 ```
 Stage 1: Fetch by Category
-    → Query Polymarket API with tag_id for each category
+    → Query Polymarket Events API with tag_id for each category
+    → Polymarket already categorizes events with tags
 
 Stage 2: Blocklist Filtering
     → Remove: tweet counts, daily crypto bets, esports, resolved (>95%/<5%)
@@ -23,7 +24,7 @@ Stage 4: LLM Quality Filter + Summary (Groq)
 
 Stage 5: Weighted Selection
     → Politics: 3, Geopolitics: 2, Economy: 2
-    → Science/Tech: 1, Climate: 1, Sports: 1, Culture: 1
+    → Science/Tech: 1, Sports: 1, Culture: 1
     → Target: ~10 markets total
 
 Stage 6: Render & Send
@@ -33,19 +34,18 @@ Stage 6: Render & Send
 
 ## Category Configuration
 
-### Tag Mappings
+### Tag IDs (from Polymarket API)
 
-Fetch tag IDs from Polymarket's `/tags` endpoint, map to our categories:
+Use Polymarket's existing event tags via the Events API `tag_id` parameter:
 
 ```python
 CATEGORY_TAGS = {
-    "politics": [<politics_tag_id>, <elections_tag_id>, ...],
-    "geopolitics": [<world_tag_id>, <conflict_tag_id>, ...],
-    "economy": [<economy_tag_id>, <fed_tag_id>, ...],
-    "science_tech": [<tech_tag_id>, <ai_tag_id>, ...],
-    "climate_weather": [<weather_tag_id>, <climate_tag_id>, ...],
-    "sports_major": [<sports_tag_id>, ...],
-    "culture": [<entertainment_tag_id>, ...],
+    "politics": 2,
+    "geopolitics": 100265,
+    "economy": 100328,
+    "science_tech": 1401,
+    "sports": 1,
+    "culture": 596,
 }
 ```
 
@@ -57,8 +57,7 @@ CATEGORY_WEIGHTS = {
     "geopolitics": 2,
     "economy": 2,
     "science_tech": 1,
-    "climate_weather": 1,
-    "sports_major": 1,
+    "sports": 1,
     "culture": 1,
 }
 TARGET_TOTAL = 10
@@ -73,7 +72,6 @@ BLOCKLIST_PATTERNS = [
     r"tweet|post.*\d+.*tweets",           # Tweet counts
     r"bitcoin.*\$.*on (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)",  # Daily crypto prices
     r"bo3|bo5|lpl|lcs|lec|valorant",      # Esports
-    r"vs\..*game \d",                      # Individual sports games
 ]
 ```
 
@@ -144,8 +142,8 @@ Volume: $1.2M | [View on Polymarket]
 
 | File | Changes |
 |------|---------|
-| `src/polymarket.py` | Add `fetch_markets_by_category()`, tag ID mappings |
-| `src/ranker.py` | Replace with blocklist filtering + volume threshold |
+| `src/polymarket.py` | Add `fetch_events_by_category()` using Events API with tag_id |
+| `src/ranker.py` | Replace with blocklist filtering + volume threshold + weighted selection |
 | `src/main.py` | Update orchestration for new pipeline |
 | `src/email_template.py` | Display LLM summaries |
 
@@ -154,7 +152,6 @@ Volume: $1.2M | [View on Polymarket]
 | File | Purpose |
 |------|---------|
 | `src/llm.py` | Groq client for quality filtering + summary |
-| `src/categories.py` | Category tag mappings + weighted selection |
 
 ### Dependencies
 
@@ -170,8 +167,11 @@ Add:
 
 ## Weighted Selection Algorithm
 
-1. Group LLM-approved markets by category
-2. Within each category, rank by 24h price change (biggest movers first)
-3. Allocate slots based on weights (politics: 3, geopolitics: 2, etc.)
-4. If a category has fewer markets than allocation, redistribute to others
-5. Cap at TARGET_TOTAL (10)
+1. Fetch events from each category using tag_id
+2. Apply blocklist and volume threshold
+3. Send candidates to LLM for judgment
+4. Group LLM-approved markets by category
+5. Within each category, rank by 24h price change (biggest movers first)
+6. Allocate slots based on weights (politics: 3, geopolitics: 2, etc.)
+7. If a category has fewer markets than allocation, redistribute to others
+8. Cap at TARGET_TOTAL (10)
