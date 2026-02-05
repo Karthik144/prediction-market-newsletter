@@ -27,8 +27,10 @@ def filter_markets(markets: list[dict]) -> list[dict]:
             continue
 
         result.append(market)
+    
+    result.sort(key=lambda x: x.get("volume24hr", 0), reverse=True)
 
-    return result
+    return result[:5]
 
 
 def select_top_markets(markets: list[dict], target_total: int = 10) -> list[dict]:
